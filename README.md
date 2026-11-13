@@ -134,8 +134,39 @@ scan_logs.pl -nowarn --pat ${PROJECT_DIR}/scripts/patterns/sim_patterns.pat --wa
 ```
 The regression tests run automatically in batch mode and with the dump option enabled, so that the created database files can be found in the `regression/<tool>_db/` folder and used by mean of the `post_proc` command 
 
-> **Note:**
-> Some regression failures may currently be expected because of known bugs in the DUT. These are being tracked, check [CVFPU Issues](https://github.com/openhwgroup/cvfpu/issues) section to confirm whether it is a known bug or a new issue that should be reported.
+#### Code coverage (Questasim only)
+
+Coverage is opt-in and flows in four stages: instrument + collect, merge, waive (optional), report. All of the coverage scripts and options are documented in full in [`sim_cmd`'s own README](modules/core-v-verif/lib/cv_dv_utils/python/sim_cmd/README.md); this section covers the common project workflow.
+
+**Single test**, instrumented for branch/condition/statement/FSM coverage and scoped to the DUT:
+```
+python3 ${SCRIPTS_DIR}/compile.py --yaml sim_questa.yaml --cover 1 --cover_types bcfs --cover_instance /top/dut
+python3 ${SCRIPTS_DIR}/run_test.py --yaml sim_questa.yaml --test_name fpu_random_test --seed 1 --cover 1
+```
+The UCDB is saved to `output/coverage/fpu_random_test_1.ucdb`.
+
+**Regression**, with an automatic merge and HTML report once every test finishes:
+```
+python3 ${SCRIPTS_DIR}/run_reg.py --yaml sim_questa.yaml --nthreads 3 --reg_list fpu_reg_list \
+    --cover 1 --cover_types bcfs --cover_instance /top/dut --cover_merge 1 --cover_report 1
+```
+This produces `regression/coverage/merged.ucdb` and an HTML report under `regression/cov_report/`.
+
+**Applying waivers**: this project's coverage exclusions (with rationale) live in `simu/exclude.do`. To fold them into the merged UCDB, keeping the pre-waiver database untouched, pass `--cover_excl_file` alongside `--cover_merge 1`:
+```
+python3 ${SCRIPTS_DIR}/run_reg.py --yaml sim_questa.yaml --nthreads 3 --reg_list fpu_reg_list \
+    --cover 1 --cover_merge 1 --cover_excl_file ${PROJECT_DIR}/simu/exclude.do --cover_report 1
+```
+This produces `regression/coverage/merged_excluded.ucdb` in addition to the pre-waiver `merged.ucdb`.
+
+An exclusion file is only ever applied when explicitly passed on the command line -- there is no default exclusion file baked into the scripts, and any new exclusions must be reviewed and approved before being added to `simu/exclude.do`.
+
+**Standalone merge/report**, e.g. to regenerate a report from an already-merged UCDB, or to get a holes-only or metrics summary instead of the full HTML report:
+```
+python3 ${SCRIPTS_DIR}/cov_merge.py --outdir regression --excl_file ${PROJECT_DIR}/simu/exclude.do
+python3 ${SCRIPTS_DIR}/cov_report.py --ucdb regression/coverage/merged_excluded.ucdb --cover_types bcfs --instance /top/dut --report_type holes --holes_threshold 100
+python3 ${SCRIPTS_DIR}/cov_report.py --ucdb regression/coverage/merged_excluded.ucdb --cover_types bcfs --instance /top/dut --report_type metrics
+```
 
 ### 4.2. Known Limitations
 * The current verification environment targets the CVA6 core exclusively.

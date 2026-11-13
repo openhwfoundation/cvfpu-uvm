@@ -33,11 +33,19 @@ package fpu_agent_pkg;
     import fpu_common_pkg::*;
     import ariane_pkg::*;
     `include "uvm_macros.svh"
-
    `include "fpu_txn.svh" 
+   `include "fpu_txn_conv.svh"
+   `include "fpu_cov_model/fpu_obs_txn.svh"
    `include "fpu_driver.svh"
    `include "fpu_sequencer.svh"
    `include "fpu_monitor.svh"
    `include "fpu_sequences.svh"
-   `include "fpu_agent.svh" 
+   `include "fpu_conv_seq.svh"
+`ifdef FPU_FUNC_COV_EN
+   `include "fpu_cov_model/fpu_conv_cov.svh"
+   `include "fpu_cov_model/fpu_comput_cov.svh"
+   `include "fpu_cov_model/fpu_noncomput_cov.svh"
+   `include "fpu_cov_model/fpu_agent_cov_model.svh"
+`endif
+   `include "fpu_agent.svh"
 endpackage

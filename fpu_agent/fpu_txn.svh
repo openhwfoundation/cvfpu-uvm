@@ -37,7 +37,7 @@ class fpu_txn extends uvm_sequence_item;
     rand logic [CVA6Cfg.TRANS_ID_BITS-1:0] m_trans_id;
     rand logic [1:0]                       m_fmt;          // FP format
     rand logic [2:0]                       m_rm;           // FP rounding mode
-    rand logic [2:0]                       m_frm;          // ( ?? ) For now unused
+    rand logic [2:0]                       m_frm;          // Dynamic rounding mode (fcsr.frm), used when m_rm == DYN
     rand logic [6:0]                       m_prec;         // FP precision
 
     rand int                               m_delay;        // Delay between two consecutive txns
@@ -67,12 +67,15 @@ class fpu_txn extends uvm_sequence_item;
         RANDOM_INT
     } int_type_cfg_e;
 
-    logic [CVA6Cfg.XLEN-1:0] special_int_values[5] = '{
-        64'h7FFF_FFFF_FFFF_FFFF,
-        64'hFFFF_FFFF_FFFF_FFFF,
-        64'h7FFF_FFFF,
-        64'hFFFF_FFFF,
-        64'h0
+    logic [CVA6Cfg.XLEN-1:0] special_int_values[8] = '{
+        64'h7FFF_FFFF_FFFF_FFFF, // IN64_MAX
+        64'hFFFF_FFFF_FFFF_FFFF, // UINT64_MAX
+        64'h7FFF_FFFF,           // IN32_MAX
+        64'hFFFF_FFFF,           // UINT32_MAX
+        64'h0,                   // Zero
+        64'h8000_0000_0000_0000, // INT64_MIN
+        64'h8000_0000,           // INT32_MIN
+        64'h7FF                  // Largest value exactly representable in FP16 (2047)
     };
              
     // List containing in flight transcation IDs
@@ -81,7 +84,6 @@ class fpu_txn extends uvm_sequence_item;
     //-------------------------------------------------------------------------
     // Transaction configuration fields
     //-------------------------------------------------------------------------
-    //RG:array unpacked for VCS compatibility
     rand fp_op_type_e   m_fp_op_type [2:0];         // Class of floating point operands
     rand fp_double_t    m_fp_double_operands [2:0]; // Double precision floating point operands
     rand fp_single_t    m_fp_single_operands [2:0]; // Single precision floating point operands
@@ -107,12 +109,12 @@ class fpu_txn extends uvm_sequence_item;
     constraint operands_config_c {
         foreach (m_fp_op_type[i]) {
             m_fp_op_type[i] dist {
-                NORMAL     := 66,
+                NORMAL     := 50,
                 SUBNORMAL  := 30,
-                ZERO       := 1,
-                INF        := 1,
-                QNAN       := 1,
-                SNAN       := 1
+                ZERO       := 5,
+                INF        := 5,
+                QNAN       := 5,
+                SNAN       := 5
             };
         }
     }
@@ -130,6 +132,13 @@ class fpu_txn extends uvm_sequence_item;
         }
     }
 
+    constraint fp_normal_fp64_exp_c {
+        foreach (m_fp_op_type[i]) {
+            (m_fp_op_type[i] == NORMAL) && (m_fmt == 1) -> 
+                m_fp_double_operands[i].exponent dist {1 := 5, [2 : EMIN_FP32-2] := 20, EMIN_FP32 := 5, [EMIN_FP32+2 : EMAX_FP32-2] := 20, EMAX_FP32 := 5, [EMAX_FP32+2 : EMAX_FP64-1] := 45};
+        }
+    }
+
     constraint fp_mant_cfg_c { 
         foreach (m_fp_mant_cfg[i]) {
             m_fp_mant_cfg[i] dist { ALL_ZEROS    := 10,
@@ -143,28 +152,42 @@ class fpu_txn extends uvm_sequence_item;
 
     constraint double_mant_c {
         foreach (m_fp_op_type[i]) {
-            m_fp_op_type[i] inside {ZERO, INF}         -> m_fp_double_operands[i].mantissa == '0;
-            m_fp_op_type[i] inside {QNAN}              -> (m_fp_double_operands[i].mantissa != '0) && (m_fp_double_operands[i].mantissa[FP64_MAN_BITS-1] == 1'b1);
-            m_fp_op_type[i] inside {SNAN}              -> (m_fp_double_operands[i].mantissa != '0) && (m_fp_double_operands[i].mantissa[FP64_MAN_BITS-1] == 1'b0);
-            m_fp_op_type[i] inside {SUBNORMAL, NORMAL} -> {
+            if (m_fp_op_type[i] inside {ZERO, INF}) {
+                m_fp_double_operands[i].mantissa == '0;
+            } else if (m_fp_op_type[i] == QNAN) {
+                m_fp_double_operands[i].mantissa != '0;
+            } else if (m_fp_op_type[i] == SNAN) {
+                m_fp_double_operands[i].mantissa[FP64_MAN_BITS-1] == 1'b0;
+            } else if (m_fp_op_type[i] == SUBNORMAL) {
+                (m_fp_mant_cfg[i] == ALL_ONES)     ->  m_fp_double_operands[i].mantissa == '1;
+                (m_fp_mant_cfg[i] == WALKING_ONE)  ->  $countones(m_fp_double_operands[i].mantissa) == 1;
+                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_double_operands[i].mantissa) ==FP64_MAN_BITS-1;
+            } else {
                 (m_fp_mant_cfg[i] == ALL_ZEROS)    ->  m_fp_double_operands[i].mantissa == '0;
                 (m_fp_mant_cfg[i] == ALL_ONES)     ->  m_fp_double_operands[i].mantissa == '1;
                 (m_fp_mant_cfg[i] == WALKING_ONE)  ->  $countones(m_fp_double_operands[i].mantissa) == 1;
-                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_double_operands[i].mantissa) == 51;
+                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_double_operands[i].mantissa) == FP64_MAN_BITS-1;
             }
         }
     }
 
     constraint single_mant_c {
         foreach (m_fp_op_type[i]) {
-            m_fp_op_type[i] inside {ZERO, INF}         -> m_fp_single_operands[i].mantissa == '0;
-            m_fp_op_type[i] inside {QNAN}              -> (m_fp_single_operands[i].mantissa != '0) && (m_fp_single_operands[i].mantissa[FP32_MAN_BITS-1] == 1'b1);
-            m_fp_op_type[i] inside {SNAN}              -> (m_fp_single_operands[i].mantissa != '0) && (m_fp_single_operands[i].mantissa[FP32_MAN_BITS-1] == 1'b0);
-            m_fp_op_type[i] inside {SUBNORMAL, NORMAL} -> {
+            if (m_fp_op_type[i] inside {ZERO, INF}) {
+                m_fp_single_operands[i].mantissa == '0;
+            } else if (m_fp_op_type[i] == QNAN) {
+                m_fp_single_operands[i].mantissa != '0;
+            } else if (m_fp_op_type[i] == SNAN) {
+                m_fp_single_operands[i].mantissa[FP32_MAN_BITS-1] == 1'b0;
+            } else if (m_fp_op_type[i] == SUBNORMAL) {
+                (m_fp_mant_cfg[i] == ALL_ONES)     ->  m_fp_single_operands[i].mantissa == '1;
+                (m_fp_mant_cfg[i] == WALKING_ONE)  ->  $countones(m_fp_single_operands[i].mantissa) == 1;
+                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_single_operands[i].mantissa) == FP32_MAN_BITS-1;
+            } else {
                 (m_fp_mant_cfg[i] == ALL_ZEROS)    ->  m_fp_single_operands[i].mantissa == '0;
                 (m_fp_mant_cfg[i] == ALL_ONES)     ->  m_fp_single_operands[i].mantissa == '1;
                 (m_fp_mant_cfg[i] == WALKING_ONE)  ->  $countones(m_fp_single_operands[i].mantissa) == 1;
-                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_single_operands[i].mantissa) == 22;
+                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_single_operands[i].mantissa) == FP32_MAN_BITS-1;
             }
         }
     }
@@ -180,12 +203,12 @@ class fpu_txn extends uvm_sequence_item;
             } else if (m_fp_op_type[i] == SUBNORMAL) {
                 (m_fp_mant_cfg[i] == ALL_ONES)     ->  m_fp_half_operands[i].mantissa == '1;
                 (m_fp_mant_cfg[i] == WALKING_ONE)  ->  $countones(m_fp_half_operands[i].mantissa) == 1;
-                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_half_operands[i].mantissa) == 9;
+                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_half_operands[i].mantissa) == FP16_MAN_BITS-1;
             } else {
                 (m_fp_mant_cfg[i] == ALL_ZEROS)    ->  m_fp_half_operands[i].mantissa == '0;
                 (m_fp_mant_cfg[i] == ALL_ONES)     ->  m_fp_half_operands[i].mantissa == '1;
                 (m_fp_mant_cfg[i] == WALKING_ONE)  ->  $countones(m_fp_half_operands[i].mantissa) == 1;
-                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_half_operands[i].mantissa) == 9;
+                (m_fp_mant_cfg[i] == WALKING_ZERO) ->  $countones(m_fp_half_operands[i].mantissa) == FP16_MAN_BITS-1;
             }
         }
     }
@@ -232,7 +255,8 @@ class fpu_txn extends uvm_sequence_item;
     constraint int_operand_c { (m_int_op_type == BOUND_VALUES) -> {m_int_operand inside {special_int_values} }; }
 
     // RMM -> Not supported by MPFR library
-    constraint rm_c { m_rm <= 3; }
+    constraint rm_c { m_rm inside {[0:3], fpnew_pkg::DYN}; }
+    constraint frm_c { m_frm <= 3; }
 
     constraint rm_fcmp_c { m_operation inside {FSGNJ, FCMP} -> m_rm <= 2; }
     
@@ -264,6 +288,8 @@ class fpu_txn extends uvm_sequence_item;
         m_operand_b = m_nan_box ? (m_operand_b & ((1 << FP_WIDTH) - 1) | all_ones) : m_operand_b;
         m_imm       = m_nan_box ? (m_imm       & ((1 << FP_WIDTH) - 1) | all_ones) : m_imm;
 
+        `uvm_info("POST_RANDOMIZE", $sformatf("op=%0s, operand_a_type=%0s, fmt=%0d, imm=%0d, nan_box=%b",
+                    m_operation.name(), m_fp_op_type[0].name(), m_fmt, m_imm[1:0], m_nan_box), UVM_LOW);
     endfunction
 
     // -------------------------------------------------------------------------

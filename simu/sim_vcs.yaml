@@ -5,6 +5,7 @@
   compile:
     work_lib    : "work"
     filelist    : "${PROJECT_DIR}/simu/bender_filelist.f"
+    bender_targets : ["cv_dv_utils"]
     comp_option : "-sverilog -timescale=1ns/1ps -full64 -debug_access+r -kdb +define+VCS +incdir+${PROJECT_DIR} -ntb_opts uvm"
     top_entity  :  "top"
   sim:

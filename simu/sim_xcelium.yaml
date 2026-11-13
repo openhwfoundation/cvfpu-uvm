@@ -5,6 +5,7 @@
   compile:
     work_lib     : "work"
     filelist     : "${PROJECT_DIR}/simu/bender_filelist.f"
+    bender_targets : ["cv_dv_utils"]
     comp_option  : "-64bit -errormax 1 -nowarn UEXPSC -nowarn SPDUSD -nowarn NOINUF -nowarn FUNTSK +incdir+${PROJECT_DIR} -uvm -define XCELIUM"
     elab_option  :  "-64bit -access +rwc -errormax 1 -timescale 1ns/1ps -nowarn CUVUKP +incdir+${PROJECT_DIR} -uvm"
     top_entity   :  "top"

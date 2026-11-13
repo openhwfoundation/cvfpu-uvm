@@ -148,7 +148,7 @@ module fpu_wrap
       check_ah        = 1'b0;  // whether set scalar AH encoding from MSB of rm_i
 
       // Scalar Rounding Modes - some ops encode inside RM but use smaller range
-      if (!(fpu_rm_i inside {[3'b000 : 3'b100]})) fpu_rm_d = fpu_frm_i;
+      if (fpu_rm_i == 3'b111) fpu_rm_d = fpu_frm_i;
 
       // Vectorial ops always consult FRM
       if (fpu_vec_op_d) fpu_rm_d = fpu_frm_i;
@@ -161,7 +161,7 @@ module fpu_wrap
         2'b01:   fpu_dstfmt_d = fpu_vec_op_d ? fpnew_pkg::FP16ALT : fpnew_pkg::FP64;
         // FP16 or FP16ALT (scalar)
         2'b10: begin
-          if (CVA6Cfg.XF16ALT && !fpu_vec_op_d && fpu_rm_i == 3'b101) fpu_dstfmt_d = fpnew_pkg::FP16ALT;
+          if (CVA6Cfg.XF16ALT && !fpu_vec_op_d && fpu_rm_d == 3'b101) fpu_dstfmt_d = fpnew_pkg::FP16ALT;
           else fpu_dstfmt_d = fpnew_pkg::FP16;
         end
         // FP8
@@ -191,7 +191,7 @@ module fpu_wrap
         // Min/Max - OP is encoded in rm (000-001)
         FMIN_MAX: begin
           fpu_op_d = fpnew_pkg::MINMAX;
-          fpu_rm_d = {1'b0, fpu_rm_i[1:0]};  // mask out AH encoding bit
+          fpu_rm_d = {1'b0, fpu_rm_d[1:0]};  // mask out AH encoding bit
           check_ah = 1'b1;  // AH has RM MSB encoding
         end
         // Square Root
@@ -215,7 +215,7 @@ module fpu_wrap
           fpu_op_d = fpnew_pkg::F2I;
           // Vectorial Ops encoded in R bit
           if (CVA6Cfg.XFVec && fpu_vec_op_d) begin
-            fpu_op_mod_d    = fpu_rm_i[0];
+            fpu_op_mod_d    = fpu_rm_d[0];
             vec_replication = 1'b0;  // no replication, R bit used for op
             unique case (fpu_fmt_i)
               2'b00: fpu_ifmt_d = fpnew_pkg::INT32;
@@ -234,7 +234,7 @@ module fpu_wrap
           fpu_op_d = fpnew_pkg::I2F;
           // Vectorial Ops encoded in R bit
           if (CVA6Cfg.XFVec && fpu_vec_op_d) begin
-            fpu_op_mod_d    = fpu_rm_i[0];
+            fpu_op_mod_d    = fpu_rm_d[0];
             vec_replication = 1'b0;  // no replication, R bit used for op
             unique case (fpu_fmt_i)
               2'b00: fpu_ifmt_d = fpnew_pkg::INT32;
@@ -275,7 +275,7 @@ module fpu_wrap
         // Scalar Sign Injection - op encoded in rm (000-010)
         FSGNJ: begin
           fpu_op_d = fpnew_pkg::SGNJ;
-          fpu_rm_d = {1'b0, fpu_rm_i[1:0]};  // mask out AH encoding bit
+          fpu_rm_d = {1'b0, fpu_rm_d[1:0]};  // mask out AH encoding bit
           check_ah = 1'b1;  // AH has RM MSB encoding
         end
         // Move from FPR to GPR - mapped to SGNJ-passthrough since no recoding
@@ -296,14 +296,14 @@ module fpu_wrap
         // Scalar Comparisons - op encoded in rm (000-010)
         FCMP: begin
           fpu_op_d = fpnew_pkg::CMP;
-          fpu_rm_d = {1'b0, fpu_rm_i[1:0]};  // mask out AH encoding bit
+          fpu_rm_d = {1'b0, fpu_rm_d[1:0]};  // mask out AH encoding bit
           check_ah = 1'b1;  // AH has RM MSB encoding
         end
         // Classification
         FCLASS: begin
           fpu_op_d = fpnew_pkg::CLASSIFY;
           fpu_rm_d = {
-            1'b0, fpu_rm_i[1:0]
+            1'b0, fpu_rm_d[1:0]
           };  // mask out AH encoding bit - CLASS doesn't care anyways
           check_ah = 1'b1;  // AH has RM MSB encoding
         end
@@ -398,7 +398,11 @@ module fpu_wrap
       endcase
 
       // Scalar AH encoding fixing
-      if (!fpu_vec_op_d && check_ah) if (fpu_rm_i[2]) fpu_dstfmt_d = fpnew_pkg::FP16ALT;
+      if (!fpu_vec_op_d && check_ah) begin
+        automatic logic ah_bit;
+        ah_bit = (fpu_rm_i == 3'b111) ? fpu_frm_i[2] : fpu_rm_i[2];
+        if (ah_bit) fpu_dstfmt_d = fpnew_pkg::FP16ALT;
+      end
 
       // Replication
       if (fpu_vec_op_d && vec_replication) begin

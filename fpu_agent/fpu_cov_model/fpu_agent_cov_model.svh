@@ -1,21 +1,7 @@
 /*
- *  Copyright (c) 2026 OpenHW Foundation
  *  Copyright (c) 2026 Eclipse Foundation
  *
  *  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
- *
- *  Licensed under the Solderpad Hardware License v 2.1 (the “License”); you
- *  may not use this file except in compliance with the License, or, at your
- *  option, the Apache License version 2.0. You may obtain a copy of the
- *  License at
- *
- *  https://solderpad.org/licenses/SHL-2.1/
- *
- *  Unless required by applicable law or agreed to in writing, any work
- *  distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  License for the specific language governing permissions and limitations
- *  under the License.
  */
 /*
  *  Authors       : Ihsane TAHIR
@@ -164,7 +150,28 @@ class fpu_agent_cov_model extends uvm_component;
 
         cp_opA_x_sign: cross cp_operand_a_class, cp_operand_a_sign;
         cp_opB_x_sign: cross cp_operand_b_class, cp_operand_b_sign;
-        cp_opC_x_sign: cross cp_operand_c_class, cp_operand_c_sign; 
+        cp_opC_x_sign: cross cp_operand_c_class, cp_operand_c_sign;
+
+        // NaN-boxing per op and fmt. Ops that don't read an operand as a float
+        // are ignored (fpu_wrap routes FADD/FSUB through operand_b/imm, and
+        // FCVT_I2F/FMV_X2F read an integer). An FP64 operand fills FLen, so it
+        // can only be improperly boxed when F2F reads a narrower source format.
+        cx_box_a_x_op_x_fmt: cross cp_operation, cp_fmt, cp_operand_a_boxed {
+            ignore_bins not_fp = binsof(cp_operation) intersect {FADD, FSUB, FCVT_I2F, FMV_X2F};
+            ignore_bins fp64   = binsof(cp_fmt.FP64) && binsof(cp_operand_a_boxed.improperly_boxed) &&
+                                 !binsof(cp_operation) intersect {FCVT_F2F};
+        }
+
+        cx_box_b_x_op_x_fmt: cross cp_operation, cp_fmt, cp_operand_b_boxed {
+            ignore_bins not_read = binsof(cp_operation) intersect {FSQRT, FCLASS, FCVT_F2F, FCVT_F2I,
+                                                                   FCVT_I2F, FMV_F2X, FMV_X2F};
+            ignore_bins fp64     = binsof(cp_fmt.FP64) && binsof(cp_operand_b_boxed.improperly_boxed);
+        }
+
+        cx_box_c_x_op_x_fmt: cross cp_operation, cp_fmt, cp_operand_c_boxed {
+            ignore_bins not_read = !binsof(cp_operation) intersect {FADD, FSUB, FMADD, FMSUB, FNMSUB, FNMADD};
+            ignore_bins fp64     = binsof(cp_fmt.FP64) && binsof(cp_operand_c_boxed.improperly_boxed);
+        }
     endgroup
     
     covergroup cg_fpu_response(string name = "cg_fpu_response");

@@ -85,6 +85,8 @@ python3 ${SCRIPTS_DIR}/compile.py --yaml sim_<tool>.yaml
 #### Run a test
 
 The number of transactions is set by the variable `+NB_TXNS` (passed as simulation option) in the `sim_<tool>.yaml` file.
+
+Functional coverage (UVM covergroups) is collected by default. To disable it for a run, add `+FPU_FUNC_COV_DIS` to the simulation options in the `sim_<tool>.yaml` file.
 ```
 python3 ${SCRIPTS_DIR}/run_test.py --yaml sim_<tool>.yaml --test_name <TEST_NAME> --seed <SEED> --debug <VERBOSITY>
 ```
@@ -138,6 +140,8 @@ The regression tests run automatically in batch mode and with the dump option en
 
 Coverage is opt-in and flows in four stages: instrument + collect, merge, waive (optional), report. All of the coverage scripts and options are documented in full in [`sim_cmd`'s own README](modules/core-v-verif/lib/cv_dv_utils/python/sim_cmd/README.md); this section covers the common project workflow.
 
+The functional coverage model and the SVA cover properties are always compiled; no compile-time define is needed. Covergroup sampling can be turned off at run time with `+FPU_FUNC_COV_DIS` (see [Run a test](#run-a-test)), while the SVA cover properties remain active.
+
 **Single test**, instrumented for branch/condition/statement/FSM coverage and scoped to the DUT:
 ```
 python3 ${SCRIPTS_DIR}/compile.py --yaml sim_questa.yaml --cover 1 --cover_types bcfs --cover_instance /top/dut
@@ -152,18 +156,18 @@ python3 ${SCRIPTS_DIR}/run_reg.py --yaml sim_questa.yaml --nthreads 3 --reg_list
 ```
 This produces `regression/coverage/merged.ucdb` and an HTML report under `regression/cov_report/`.
 
-**Applying waivers**: this project's coverage exclusions (with rationale) live in `simu/exclude.do`. To fold them into the merged UCDB, keeping the pre-waiver database untouched, pass `--cover_excl_file` alongside `--cover_merge 1`:
+**Applying waivers**: this project's coverage exclusions (with rationale) live in `simu/tools/vsim/exclude.do`. To fold them into the merged UCDB, keeping the pre-waiver database untouched, pass `--cover_excl_file` alongside `--cover_merge 1`:
 ```
 python3 ${SCRIPTS_DIR}/run_reg.py --yaml sim_questa.yaml --nthreads 3 --reg_list fpu_reg_list \
-    --cover 1 --cover_merge 1 --cover_excl_file ${PROJECT_DIR}/simu/exclude.do --cover_report 1
+    --cover 1 --cover_merge 1 --cover_excl_file ${PROJECT_DIR}/simu/tools/vsim/exclude.do --cover_report 1
 ```
 This produces `regression/coverage/merged_excluded.ucdb` in addition to the pre-waiver `merged.ucdb`.
 
-An exclusion file is only ever applied when explicitly passed on the command line -- there is no default exclusion file baked into the scripts, and any new exclusions must be reviewed and approved before being added to `simu/exclude.do`.
+An exclusion file is only ever applied when explicitly passed on the command line -- there is no default exclusion file baked into the scripts, and any new exclusions must be reviewed and approved before being added to `simu/tools/vsim/exclude.do`.
 
 **Standalone merge/report**, e.g. to regenerate a report from an already-merged UCDB, or to get a holes-only or metrics summary instead of the full HTML report:
 ```
-python3 ${SCRIPTS_DIR}/cov_merge.py --outdir regression --excl_file ${PROJECT_DIR}/simu/exclude.do
+python3 ${SCRIPTS_DIR}/cov_merge.py --outdir regression --excl_file ${PROJECT_DIR}/simu/tools/vsim/exclude.do
 python3 ${SCRIPTS_DIR}/cov_report.py --ucdb regression/coverage/merged_excluded.ucdb --cover_types bcfs --instance /top/dut --report_type holes --holes_threshold 100
 python3 ${SCRIPTS_DIR}/cov_report.py --ucdb regression/coverage/merged_excluded.ucdb --cover_types bcfs --instance /top/dut --report_type metrics
 ```

@@ -32,6 +32,8 @@ class fpu_top_cfg extends uvm_object;
     rand bit m_flush_on_the_fly;
     // Number of transactions in a sequence
     int num_txn;
+    // Functional coverage (UVM covergroups) enable
+    bit func_cov_en;
 
     // ------------------------------------------------------------------------
     // Constructor
@@ -43,6 +45,8 @@ class fpu_top_cfg extends uvm_object;
             num_txn = 10000;
         end
       `uvm_info( get_full_name(), $sformatf("NUM_TXN=%0d", num_txn), UVM_HIGH );
+
+        func_cov_en = !$test$plusargs("FPU_FUNC_COV_DIS");
     endfunction
 
     // ---------------------------------------------
@@ -58,6 +62,10 @@ class fpu_top_cfg extends uvm_object;
 
     virtual function int get_num_txn();
         return num_txn;
+    endfunction
+
+    virtual function bit get_func_cov_en();
+        return func_cov_en;
     endfunction
 
     // ------------------------------------------------------------------------

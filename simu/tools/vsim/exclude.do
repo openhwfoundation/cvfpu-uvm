@@ -1,3 +1,7 @@
+#  Copyright (c) 2026 Eclipse Foundation
+#
+#  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 # 1: Undriven rounding modes: RMM/ROD
 # 1.1 RMM not stimulated
 coverage exclude -du ct_vfdsu_prepare -code s -linerange 590 -comment {RMM is omitted because the current reference model cannot check it.}

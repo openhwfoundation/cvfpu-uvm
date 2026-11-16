@@ -76,6 +76,7 @@ class fpu_env extends uvm_env;
         m_req_bp_seq   = bp_virtual_sequence::type_id::create("req_bp_sequence", this);
 
         m_fpu_top_cfg  = fpu_top_cfg::type_id::create("fpu_top_cfg", this );
+        m_fpu_agent.set_func_cov_en(m_fpu_top_cfg.get_func_cov_en());
 
         `uvm_info(get_full_name(), "Build phase complete", UVM_DEBUG)
     endfunction: build_phase

@@ -1,20 +1,7 @@
 /*
- *  Copyright (c) 2026 OpenHW Foundation
+ *  Copyright (c) 2026 Eclipse Foundation
  *
  *  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
- *
- *  Licensed under the Solderpad Hardware License v 2.1 (the “License”); you
- *  may not use this file except in compliance with the License, or, at your
- *  option, the Apache License version 2.0. You may obtain a copy of the
- *  License at
- *
- *  https://solderpad.org/licenses/SHL-2.1/
- *
- *  Unless required by applicable law or agreed to in writing, any work
- *  distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  License for the specific language governing permissions and limitations
- *  under the License.
  */
 /*
  *  Authors       : Ihsane TAHIR
@@ -108,8 +95,10 @@ class fpu_noncomput_cov extends uvm_subscriber #(fpu_obs_txn);
     // CG_MV - Move Operations
     // -------------------------------------------------------------------------
     covergroup cg_move_f2x with function sample(
-        fpnew_pkg::classmask_e op_class,
-        logic [1:0]            fmt
+        fpnew_pkg::classmask_e     op_class,
+        logic [1:0]                fmt,
+        fpu_common_pkg::nan_kind_e nan_kind,
+        logic                      boxed
     );
         option.per_instance = 1;
 
@@ -120,7 +109,60 @@ class fpu_noncomput_cov extends uvm_subscriber #(fpu_obs_txn);
             bins fp16 = {2'b10};
         }
 
+        cp_nan_kind: coverpoint nan_kind {
+            bins canonical_qnan = {fpu_common_pkg::CANONICAL_QNAN};
+            bins noncanon_qnan  = {fpu_common_pkg::NONCANON_QNAN};
+            bins snan           = {fpu_common_pkg::SNAN_KIND};
+        }
+
+        // Transfers are exempt from the NaN-box check, so an improperly boxed
+        // source must still move its low bits unchanged.
+        cp_boxed: coverpoint boxed {
+            bins properly_boxed   = {1'b1};
+            bins improperly_boxed = {1'b0};
+        }
+
         cx_op_class_x_fmt: cross cp_op_class, cp_fmt;
+        cx_nan_kind_x_fmt: cross cp_nan_kind, cp_fmt;
+        cx_boxed_x_fmt:    cross cp_boxed, cp_fmt {
+            ignore_bins fp64_always_boxed = binsof(cp_boxed.improperly_boxed) && binsof(cp_fmt.fp64);
+        }
+    endgroup
+
+    covergroup cg_move_x2f with function sample(
+        fpnew_pkg::classmask_e     op_class,
+        logic [1:0]                fmt,
+        fpu_common_pkg::nan_kind_e nan_kind,
+        logic [1:0]                src_upper   // 0=zero, 1=all ones, 2=other, 3=n/a (FP64)
+    );
+        option.per_instance = 1;
+
+        cp_op_class: coverpoint op_class;
+        cp_fmt:      coverpoint fmt {
+            bins fp32 = {2'b00};
+            bins fp64 = {2'b01};
+            bins fp16 = {2'b10};
+        }
+
+        cp_nan_kind: coverpoint nan_kind {
+            bins canonical_qnan = {fpu_common_pkg::CANONICAL_QNAN};
+            bins noncanon_qnan  = {fpu_common_pkg::NONCANON_QNAN};
+            bins snan           = {fpu_common_pkg::SNAN_KIND};
+        }
+
+        // Upper integer bits must be ignored and replaced by the NaN box.
+        cp_src_upper: coverpoint src_upper {
+            bins zero     = {2'd0};
+            bins all_ones = {2'd1};
+            bins other    = {2'd2};
+            ignore_bins na = {2'd3};
+        }
+
+        cx_op_class_x_fmt:   cross cp_op_class, cp_fmt;
+        cx_nan_kind_x_fmt:   cross cp_nan_kind, cp_fmt;
+        cx_src_upper_x_fmt:  cross cp_src_upper, cp_fmt {
+            ignore_bins fp64 = binsof(cp_fmt.fp64);
+        }
     endgroup
 
     // -------------------------------------------------------------------------
@@ -130,11 +172,24 @@ class fpu_noncomput_cov extends uvm_subscriber #(fpu_obs_txn);
         logic [1:0]            op,
         logic [1:0]            fmt,
         fpnew_pkg::classmask_e op_class,
-        logic                  op2_sign
+        logic                  op2_sign,
+        logic                  same_operands,
+        fpu_common_pkg::nan_kind_e nan_kind
     );
         option.per_instance = 1;
 
         cp_op_class: coverpoint op_class;
+
+        // rs1 == rs2 is how FMV/FNEG/FABS are encoded.
+        cp_same: coverpoint same_operands {
+            bins pseudo_op = {1'b1};
+        }
+
+        cp_nan_kind: coverpoint nan_kind {
+            bins canonical_qnan = {fpu_common_pkg::CANONICAL_QNAN};
+            bins noncanon_qnan  = {fpu_common_pkg::NONCANON_QNAN};
+            bins snan           = {fpu_common_pkg::SNAN_KIND};
+        }
 
         cp_fsgn_op: coverpoint op {
             bins        fsgnj  = {2'b00};
@@ -153,6 +208,8 @@ class fpu_noncomput_cov extends uvm_subscriber #(fpu_obs_txn);
         
         // Cross all coverroups
         cx_fsgn_x_sign_x_fmt: cross cp_fsgn_op, cp_op_class, cp_op2_sign, cp_fmt;
+        cx_pseudo_op:         cross cp_fsgn_op, cp_same, cp_fmt;
+        cx_fsgn_x_nan_kind:   cross cp_fsgn_op, cp_nan_kind;
     endgroup
 
     // Constructor
@@ -161,6 +218,7 @@ class fpu_noncomput_cov extends uvm_subscriber #(fpu_obs_txn);
         cg_compare        = new();
         cg_classify       = new();
         cg_move_f2x       = new();
+        cg_move_x2f       = new();
         cg_sign_injection = new();
     endfunction : new
 
@@ -194,17 +252,40 @@ class fpu_noncomput_cov extends uvm_subscriber #(fpu_obs_txn);
                     t.m_rm[1:0], // 0=FSGNJ, 1=FSGNJN, 2=FSGNJX
                     t.m_fmt,
                     fpu_common_pkg::classify_operand(t.m_operand_a, t.m_fmt),
-                    fpu_common_pkg::get_operand_sign(t.m_operand_b, t.m_fmt)
+                    fpu_common_pkg::get_operand_sign(t.m_operand_b, t.m_fmt),
+                    t.m_operand_a == t.m_operand_b,
+                    fpu_common_pkg::nan_kind(t.m_operand_a, t.m_fmt)
                 );
             end
 
             FMV_F2X: begin
                 cg_move_f2x.sample(
                     fpu_common_pkg::classify_operand(t.m_operand_a, t.m_fmt, 1'b0),
-                    t.m_fmt
+                    t.m_fmt,
+                    fpu_common_pkg::nan_kind(t.m_operand_a, t.m_fmt, 1'b0),
+                    fpu_common_pkg::operand_is_boxed(t.m_operand_a, t.m_fmt)
+                );
+            end
+
+            FMV_X2F: begin
+                cg_move_x2f.sample(
+                    fpu_common_pkg::classify_operand(t.m_operand_a, t.m_fmt, 1'b0),
+                    t.m_fmt,
+                    fpu_common_pkg::nan_kind(t.m_operand_a, t.m_fmt, 1'b0),
+                    x2f_src_upper(t.m_operand_a, t.m_fmt)
                 );
             end
         endcase
     endfunction : write
+
+    function logic [1:0] x2f_src_upper(logic [CVA6Cfg.XLEN-1:0] value, logic [1:0] fmt);
+        int unsigned width = fpnew_pkg::fp_width(fpnew_pkg::fp_format_e'(fmt));
+        logic [CVA6Cfg.XLEN-1:0] upper;
+        if (width >= CVA6Cfg.XLEN) return 2'd3;
+        upper = value >> width;
+        if (upper == '0) return 2'd0;
+        if (upper == ({CVA6Cfg.XLEN{1'b1}} >> width)) return 2'd1;
+        return 2'd2;
+    endfunction : x2f_src_upper
 
 endclass : fpu_noncomput_cov

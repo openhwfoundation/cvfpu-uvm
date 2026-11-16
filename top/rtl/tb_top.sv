@@ -106,9 +106,7 @@ module top;
         .DataType(output_t)
     ) rsp_arb_sva(.*);
 
-`ifdef FPU_FUNC_COV_EN
     bind fpu_wrap cvfpu_pipeline_sva#(
-        .CVA6Cfg(CVA6Cfg),
         .fu_data_t(fu_data_t)
     ) pipeline_sva(.*);
     
@@ -140,7 +138,6 @@ module top;
     // all formats
     bind dut.fpu_gen.i_fpnew_bulk.gen_operation_groups[1].i_opgroup_block.gen_merged_slice.i_multifmt_slice.gen_num_lanes[0].active_lane.lane_instance.gen_thmulti_c910_divsqrt.i_fpnew_divsqrt_th_64_c910
         cvfpu_stage_occupancy_sva#(.NumInpRegs(1), .NumMidRegs(0), .NumOutRegs(1)) stage_occ_divsqrt_sva(.mid_pipe_valid_q('0), .*);
-`endif
 
     initial begin
         uvm_config_db#(virtual fpu_if)::set(uvm_root::get( ) , "*" , "fpu_vif", fpu_vif);

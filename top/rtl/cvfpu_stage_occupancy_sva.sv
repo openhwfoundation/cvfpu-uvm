@@ -1,4 +1,9 @@
 /*
+ *  Copyright (c) 2026 Eclipse Foundation
+ *
+ *  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+ */
+/*
  *  Stage Occupancy Coverage: saturation and flush-vs-stage, bound directly
  *  into each fpnew datapath module (fpnew_fma, fpnew_noncomp,
  *  fpnew_cast_multi, fpnew_divsqrt_th_64_multi), reading each module's own
@@ -17,8 +22,6 @@ module cvfpu_stage_occupancy_sva #(
     input logic [0:NumMidRegs] mid_pipe_valid_q,  // unconnected/unused when NumMidRegs==0
     input logic [0:NumOutRegs] out_pipe_valid_q
 );
-
-  /* pragma translate_off */
 
   // -------------------------------------------------------------------------
   // 1. Saturation — 1 bin: every real register stage occupied simultaneously
@@ -70,7 +73,5 @@ module cvfpu_stage_occupancy_sva #(
       @(posedge clk_i) disable iff (!rst_ni) flush_i && out_pipe_valid_q[i]
     );
   end
-
-  /* pragma translate_on */
 
 endmodule

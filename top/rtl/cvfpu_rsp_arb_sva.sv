@@ -1,3 +1,8 @@
+/*
+ *  Copyright (c) 2026 Eclipse Foundation
+ *
+ *  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+ */
 module cvfpu_rsp_arb_sva #(
   parameter int unsigned NumIn      = 64,
   parameter int unsigned IdxWidth   = (NumIn > 32'd1) ? unsigned'($clog2(NumIn)) : 32'd1,
@@ -17,9 +22,7 @@ module cvfpu_rsp_arb_sva #(
   input  DataType             data_o,
   input  idx_t                idx_o
 );
-  /* pragma translate_off */
 
-`ifdef FPU_FUNC_COV_EN
   // ------------------------------------------------------------------------
   // Coverage: all possible request scenarios
   // ------------------------------------------------------------------------
@@ -63,8 +66,5 @@ module cvfpu_rsp_arb_sva #(
         (req_i == {NumIn{1'b1}} && gnt_i) ##0 gnt_o[i]);
     end
   endgenerate
-`endif
-
-  /* pragma translate_on */
 
 endmodule

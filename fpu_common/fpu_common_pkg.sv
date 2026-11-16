@@ -108,7 +108,14 @@ package fpu_common_pkg;
         SUBNORMAL,
         NORMAL
     } fp_op_type_e;
-    
+
+    typedef enum logic [1:0] {
+        NOT_NAN,
+        CANONICAL_QNAN,
+        NONCANON_QNAN,
+        SNAN_KIND
+    } nan_kind_e;
+
     // print fpu req
     function void print_fpu_req(fpu_req_t R, string S, uvm_verbosity verbosity);
         `uvm_info(S, $sformatf("OP=%0s, OP_A=%0x(x), OP_B=%0x(x), IMM=%0x(x), TID=%0x(x), FMT=%0d(d), RM=%0x(x)", 
@@ -229,6 +236,26 @@ package fpu_common_pkg;
             2'h2: return value[FP16_MAN_BITS + FP16_EXP_BITS];
         endcase
     endfunction: get_operand_sign
+
+    // Canonical means positive with only the mantissa MSB set; any other quiet
+    // NaN carries a payload that transfer ops must preserve bit-exactly.
+    function nan_kind_e nan_kind(logic [CVA6Cfg.FLen-1:0] value, logic [1:0] fmt,
+                                 bit check_box = 1'b1);
+        logic [51:0] canon_mant;
+        fpnew_pkg::classmask_e cls;
+
+        if (check_box && !operand_is_boxed(value, fmt)) return CANONICAL_QNAN;
+
+        cls = classify_operand(value, fmt, 1'b0);
+        if (cls == fpnew_pkg::SNAN) return SNAN_KIND;
+        if (cls != fpnew_pkg::QNAN) return NOT_NAN;
+
+        canon_mant = (fmt == 2'h0) ? 52'(1) << (FP32_MAN_BITS-1) :
+                     (fmt == 2'h1) ? 52'(1) << (FP64_MAN_BITS-1) :
+                                     52'(1) << (FP16_MAN_BITS-1);
+        if (!get_operand_sign(value, fmt) && get_mant(value, fmt) == canon_mant) return CANONICAL_QNAN;
+        return NONCANON_QNAN;
+    endfunction: nan_kind
 
 
     // Macro for per-instance coverage tracking

@@ -156,6 +156,8 @@ class fpu_txn extends uvm_sequence_item;
                 m_fp_double_operands[i].mantissa == '0;
             } else if (m_fp_op_type[i] == QNAN) {
                 m_fp_double_operands[i].mantissa != '0;
+                (m_fp_mant_cfg[i] == ALL_ZEROS) -> { m_fp_double_operands[i].sign == 1'b0;
+                                                     m_fp_double_operands[i].mantissa == 52'(1) << (FP64_MAN_BITS-1); }
             } else if (m_fp_op_type[i] == SNAN) {
                 m_fp_double_operands[i].mantissa[FP64_MAN_BITS-1] == 1'b0;
             } else if (m_fp_op_type[i] == SUBNORMAL) {
@@ -177,6 +179,8 @@ class fpu_txn extends uvm_sequence_item;
                 m_fp_single_operands[i].mantissa == '0;
             } else if (m_fp_op_type[i] == QNAN) {
                 m_fp_single_operands[i].mantissa != '0;
+                (m_fp_mant_cfg[i] == ALL_ZEROS) -> { m_fp_single_operands[i].sign == 1'b0;
+                                                     m_fp_single_operands[i].mantissa == 23'(1) << (FP32_MAN_BITS-1); }
             } else if (m_fp_op_type[i] == SNAN) {
                 m_fp_single_operands[i].mantissa[FP32_MAN_BITS-1] == 1'b0;
             } else if (m_fp_op_type[i] == SUBNORMAL) {
@@ -198,6 +202,8 @@ class fpu_txn extends uvm_sequence_item;
                 m_fp_half_operands[i].mantissa == '0;
             } else if (m_fp_op_type[i] == QNAN) {
                 (m_fp_half_operands[i].mantissa != '0) && (m_fp_half_operands[i].mantissa[FP16_MAN_BITS-1] == 1'b1);
+                (m_fp_mant_cfg[i] == ALL_ZEROS) -> { m_fp_half_operands[i].sign == 1'b0;
+                                                     m_fp_half_operands[i].mantissa == 10'(1) << (FP16_MAN_BITS-1); }
             } else if (m_fp_op_type[i] == SNAN) {
                 (m_fp_half_operands[i].mantissa != '0) && (m_fp_half_operands[i].mantissa[FP16_MAN_BITS-1] == 1'b0);
             } else if (m_fp_op_type[i] == SUBNORMAL) {
@@ -287,6 +293,11 @@ class fpu_txn extends uvm_sequence_item;
         m_operand_a = m_nan_box ? (m_operand_a & ((1 << FP_WIDTH) - 1) | all_ones) : m_operand_a;
         m_operand_b = m_nan_box ? (m_operand_b & ((1 << FP_WIDTH) - 1) | all_ones) : m_operand_b;
         m_imm       = m_nan_box ? (m_imm       & ((1 << FP_WIDTH) - 1) | all_ones) : m_imm;
+
+        // FMV.*.X must ignore the integer's upper bits, so give it garbage there,
+        // not just the all-zero pattern an unboxed narrow operand otherwise has.
+        if (m_operation == FMV_X2F && !m_nan_box && FP_WIDTH < CVA6Cfg.XLEN && $urandom_range(1))
+            m_operand_a = (m_operand_a & ((1 << FP_WIDTH) - 1)) | ({$urandom, $urandom} << FP_WIDTH);
 
         `uvm_info("POST_RANDOMIZE", $sformatf("op=%0s, operand_a_type=%0s, fmt=%0d, imm=%0d, nan_box=%b",
                     m_operation.name(), m_fp_op_type[0].name(), m_fmt, m_imm[1:0], m_nan_box), UVM_LOW);

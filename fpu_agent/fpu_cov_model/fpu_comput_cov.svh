@@ -1,20 +1,7 @@
 /*
- *  Copyright (c) 2026 OpenHW Foundation
+ *  Copyright (c) 2026 Eclipse Foundation
  *
  *  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
- *
- *  Licensed under the Solderpad Hardware License v 2.1 (the “License”); you
- *  may not use this file except in compliance with the License, or, at your
- *  option, the Apache License version 2.0. You may obtain a copy of the
- *  License at
- *
- *  https://solderpad.org/licenses/SHL-2.1/
- *
- *  Unless required by applicable law or agreed to in writing, any work
- *  distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  License for the specific language governing permissions and limitations
- *  under the License.
  */
 /*
  *  Authors       : Ihsane TAHIR
@@ -83,11 +70,11 @@ class fpu_comput_cov extends uvm_subscriber #(fpu_obs_txn);
         }
 
         cp_sub_zero_rne: coverpoint (op==FSUB && op1_class==fpnew_pkg::POSZERO && op2_class==fpnew_pkg::POSZERO && rnd_mode==3'd0) {
-            bins sub_zero_rne = {1'b1}; // Covers the case of +0 - (+0) with RNE rounding mode yielding a subnormal result
+            bins sub_zero_rne = {1'b1}; // +0 - (+0) under RNE must give +0
         }
 
         cp_sub_zero_rdn: coverpoint (op==FSUB && op1_class==fpnew_pkg::POSZERO && op2_class==fpnew_pkg::POSZERO && rnd_mode==3'd2) {
-            bins sub_zero_rdn = {1'b1}; // Covers the case of +0 - (+0) with RDN rounding mode yielding a subnormal result
+            bins sub_zero_rdn = {1'b1}; // +0 - (+0) under RDN must give -0
         }
 
         cp_subnorm_subnorm_res: coverpoint (
@@ -96,7 +83,7 @@ class fpu_comput_cov extends uvm_subscriber #(fpu_obs_txn);
             (op2_class inside {fpnew_pkg::POSSUBNORM, fpnew_pkg::NEGSUBNORM}) &&
             (res_class inside {fpnew_pkg::POSSUBNORM, fpnew_pkg::NEGSUBNORM})
         ) {
-            bins hit = {1'b1}; // Underflow with normal result: subnormal +/- subnormal -> normal with UF set
+            bins hit = {1'b1}; // Tiny but always exact, so UF is never raised (UF needs tiny and inexact)
         }
         
         cp_subnorm_norm_res: coverpoint (
@@ -105,7 +92,7 @@ class fpu_comput_cov extends uvm_subscriber #(fpu_obs_txn);
             (op2_class inside {fpnew_pkg::POSSUBNORM, fpnew_pkg::NEGSUBNORM}) &&
             (res_class inside {fpnew_pkg::POSNORM, fpnew_pkg::NEGNORM})
         ) {
-            bins hit = {1'b1}; // Exact normal result: subnormal +/- subnormal -> normal with no exception
+            bins hit = {1'b1}; // Carry out of the subnormal range into the smallest normal
         }
 
         cp_inf_invalid: coverpoint (
@@ -184,6 +171,7 @@ class fpu_comput_cov extends uvm_subscriber #(fpu_obs_txn);
             wildcard bins NX = {5'b????1}; // Bit 0: Inexact
             wildcard bins UF = {5'b???1?}; // Bit 1: Underflow
             wildcard bins OF = {5'b??1??}; // Bit 2: Overflow
+            wildcard bins DZ = {5'b?1???}; // Bit 3: Divide by Zero (FDIV only)
             wildcard bins NV = {5'b1????}; // Bit 4: Invalid Operation
         }
 
@@ -369,6 +357,10 @@ class fpu_comput_cov extends uvm_subscriber #(fpu_obs_txn);
         }
 
         cx_fma_op1_x_op2_x_op3: cross cp_op, cp_op1_class, cp_op2_class, cp_op3_class;
+        cx_op_x_fmt:            cross cp_op, cp_fmt;
+        cx_op1_class_x_fmt:     cross cp_op1_class, cp_fmt;
+        cx_op2_class_x_fmt:     cross cp_op2_class, cp_fmt;
+        cx_op3_class_x_fmt:     cross cp_op3_class, cp_fmt;
     endgroup
 
     // =========================================================================

@@ -1,20 +1,7 @@
 /*
- *  Copyright (c) 2026 OpenHW Foundation
+ *  Copyright (c) 2026 Eclipse Foundation
  *
  *  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
- *
- *  Licensed under the Solderpad Hardware License v 2.1 (the “License”); you
- *  may not use this file except in compliance with the License, or, at your
- *  option, the Apache License version 2.0. You may obtain a copy of the
- *  License at
- *
- *  https://solderpad.org/licenses/SHL-2.1/
- *
- *  Unless required by applicable law or agreed to in writing, any work
- *  distributed under the License is distributed on an “AS IS” BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  License for the specific language governing permissions and limitations
- *  under the License.
  */
 /*
  *  Authors       : Ihsane TAHIR
@@ -88,7 +75,7 @@ class fpu_txn_conv extends fpu_txn;
     localparam logic [1:0] FMT_FP16 = 2'd2;
 
     // =========================================================================
-    // Solve ordering — extend parent's chain
+    // Solve ordering
     // =========================================================================
     constraint order_stim_op_c   { solve m_conv_stim before m_operation;  }
     constraint order_stim_fmt_c  { solve m_conv_stim before m_fmt;        }

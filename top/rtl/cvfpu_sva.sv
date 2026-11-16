@@ -1,3 +1,8 @@
+/*
+ *  Copyright (c) 2026 Eclipse Foundation
+ *
+ *  SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+ */
 module cvfpu_sva
   import ariane_pkg::*;
 #(
@@ -22,8 +27,6 @@ module cvfpu_sva
     input  exception_t                             fpu_exception_o,
     input  logic                                   fpu_early_valid_o
 );
-
-  /* pragma translate_off */
 
   // -------------------------------------------------------------------------
   // Input side
@@ -60,7 +63,5 @@ module cvfpu_sva
     ( fpu_valid_o ) -> !$isunknown( result_o ) );
   fpu_exception_o_assert : assert property ( @(posedge clk_i) disable iff(!rst_ni)
     ( fpu_valid_o ) -> !$isunknown( fpu_exception_o ) );
-
-  /* pragma translate_on */
 
 endmodule

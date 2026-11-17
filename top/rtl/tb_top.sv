@@ -39,7 +39,6 @@ module top;
     import uvm_pkg::*;
     import fpu_common_pkg::*;
     import fpu_test_pkg::*;
-    import bp_driver_pkg::*;
 
     typedef struct packed {
         logic [CVA6Cfg.FLen-1:0]          result;
@@ -67,7 +66,6 @@ module top;
     
     fpu_if   fpu_vif         (.clk_i( clk ), .rst_ni( rst_n ) );
     pulse_if flush_vif       (.clk  ( clk ), .rstn  ( rst_n ) );
-    bp_vif #(1) req_bp_vif   ( .clk ( clk ), .rstn  ( rst_n ) );
 
    // -----------------------------------------------------------------
    // DUT: CVFPU wrapper for CVA6
@@ -143,7 +141,6 @@ module top;
         uvm_config_db#(virtual fpu_if)::set(uvm_root::get( ) , "*" , "fpu_vif", fpu_vif);
         uvm_config_db#(virtual pulse_if)::set(uvm_root::get(), "*", "flush_driver", flush_vif );
         uvm_config_db#(virtual xrtl_clock_vif)::set(uvm_root::get( ) , "*" , "clk_if", clock_if);
-        uvm_config_db#(virtual bp_vif #(1))::set(uvm_root::get(), "*", "req_bp_agent", req_bp_vif);
 
         uvm_config_db #(virtual xrtl_clock_vif)::set(uvm_root::get() , "*" , "clock_driver" , clock_if);
         uvm_config_db #( virtual xrtl_reset_vif #( 1'b1,50,0) )::set(uvm_root::get(), "*", "reset_driver", reset_if );

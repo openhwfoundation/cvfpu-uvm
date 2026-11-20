@@ -19,6 +19,7 @@ sources:
       - tests
       - modules/cva6-cvfpu
     files:
+      - modules/cva6-cvfpu/obi_pkg.sv
       - modules/cva6-cvfpu/config_pkg.sv
       - modules/cva6-cvfpu/build_config_pkg.sv
       - modules/cva6-cvfpu/cv64a60ax_config_pkg_cvfpu-uvm.sv

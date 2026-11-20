@@ -53,6 +53,7 @@ package fpu_common_pkg;
         logic [31:0] tinst;  // transformed instruction information
         logic gva;  // signals when a guest virtual address is written to tval
         logic valid;
+        logic timing;
     } exception_t;
 
     typedef struct packed {

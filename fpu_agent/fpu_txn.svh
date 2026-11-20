@@ -270,6 +270,8 @@ class fpu_txn extends uvm_sequence_item;
 
     constraint rm_fmin_max_c { (m_operation == FMIN_MAX) -> m_rm <= 1; }
 
+    constraint rm_fclass_c { (m_operation == FCLASS) -> m_rm == 1; }
+
     // Unused field
     constraint unused_c { m_prec == 0; }
 

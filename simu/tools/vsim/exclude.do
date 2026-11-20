@@ -19,52 +19,52 @@ coverage exclude -du ct_vfdsu_round -code s -linerange 914-917 -comment {Reserve
 
 # 2: FPU config: vector operations are disabled
 # 2.1 Vector decode, operand replication and vector-only branches
-coverage exclude -du fpu_wrap -code b -linerange 154 -item b 1 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 154 -item b 1 -allfalse -clear -comment {The false outcome is exercised; only the enabled arm is unreachable.}
-coverage exclude -du fpu_wrap -code b -linerange 161 -item b 2 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 311 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 316 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 321 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 326 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 331 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 336 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 341 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 347 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 352 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 358 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 363 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 369 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 376 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 383 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 390 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 154 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 312-313 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 317-318 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 322-323 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 327-328 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 332-333 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 337-338 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 342-344 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 348-349 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 353-355 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 359-360 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 364-366 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 370-373 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 377-380 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 384-387 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 391-394 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 408 -item b 1 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 408 -item b 1 -allfalse -clear -comment {The false outcome is exercised; only the enabled arm is unreachable.}
-coverage exclude -du fpu_wrap -code b -linerange 409 418 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code c -item c 1 -feccondrow 408 2 3 4 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 410-417 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 411 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 413 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 415 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code b -linerange 419-426 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 420 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 163 -item b 1 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 163 -item b 1 -allfalse -clear -comment {The false outcome is exercised; only the enabled arm is unreachable.}
+coverage exclude -du fpu_wrap -code b -linerange 170 -item b 2 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 320 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 325 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 330 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 335 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 340 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 345 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 350 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 356 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 361 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 367 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 372 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 378 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 385 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 392 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 399 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 163 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 321-322 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 326-327 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 331-332 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 336-337 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 341-342 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 346-347 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 351-353 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 357-358 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 362-364 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 368-369 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 373-375 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 379-382 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 386-389 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 393-396 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 400-403 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 413 -item b 1 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 413 -item b 1 -allfalse -clear -comment {The false outcome is exercised; only the enabled arm is unreachable.}
+coverage exclude -du fpu_wrap -code b -linerange 414 426 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code c -item c 1 -feccondrow 413 2 3 4 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 415-425 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 417 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 419 -comment {XFVec=0 prevents vector execution and replication.}
 coverage exclude -du fpu_wrap -code s -linerange 422 -comment {XFVec=0 prevents vector execution and replication.}
-coverage exclude -du fpu_wrap -code s -linerange 424 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code b -linerange 427-437 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 429 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 431 -comment {XFVec=0 prevents vector execution and replication.}
+coverage exclude -du fpu_wrap -code s -linerange 434 -comment {XFVec=0 prevents vector execution and replication.}
 coverage exclude -du fpnew_divsqrt_th_64_multi -code b -linerange 245 -item b 1 -comment {XFVec=0 prevents vector execution and replication.}
 coverage exclude -du fpnew_opgroup_fmt_slice -code b -linerange 284 -item b 1 -comment {XFVec=0 prevents vector execution and replication.}
 coverage exclude -scope {/top/dut/fpu_gen/i_fpnew_bulk/gen_operation_groups[3]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/conv_target} -code b -linerange 149 -item b 1 -comment {XFVec=0 prevents vector execution and replication.}
@@ -74,7 +74,7 @@ coverage exclude -scope {/top/dut/fpu_gen/i_fpnew_bulk/gen_operation_groups[3]/i
 coverage exclude -scope {/top/dut/fpu_gen/i_fpnew_bulk/gen_operation_groups[3]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/gen_num_lanes[0]/active_lane} -code c -item c 1 -feccondrow 218 2 3 4 5 6 -comment {XFVec=0 prevents vector execution and replication.}
 coverage exclude -scope {/top/dut/fpu_gen/i_fpnew_bulk/gen_operation_groups[3]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/gen_num_lanes[0]/active_lane} -code s -linerange 219 -comment {XFVec=0 prevents vector execution and replication.}
 # 2.2 `fpu_vec_op_d` in the AH check
-coverage exclude -du fpu_wrap -feccondrow 401 2 -comment {XFVec=0 fixes fpu_vec_op_d to zero; only its true FEC row is unreachable.}
+coverage exclude -du fpu_wrap -feccondrow 410 2 -comment {XFVec=0 fixes fpu_vec_op_d to zero; only its true FEC row is unreachable.}
 # 2.3 Vector bypass pipeline of the CONV slice
 coverage exclude -scope {/top/dut/fpu_gen/i_fpnew_bulk/gen_operation_groups[3]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/target_regs/gen_bypass_pipeline[0]} {/top/dut/fpu_gen/i_fpnew_bulk/gen_operation_groups[3]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/target_regs/gen_bypass_pipeline[1]} -code b -linerange 489 -item b 3 -comment {Vector bypass valid and external register enable are both tied low.}
 coverage exclude -scope {/top/dut/fpu_gen/i_fpnew_bulk/gen_operation_groups[3]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/target_regs/gen_bypass_pipeline[0]} {/top/dut/fpu_gen/i_fpnew_bulk/gen_operation_groups[3]/i_opgroup_block/gen_merged_slice/i_multifmt_slice/target_regs/gen_bypass_pipeline[1]} -code b -linerange 489 -item b 3 -allfalse -clear -comment {The false outcome is exercised; only the enabled arm is unreachable.}
@@ -94,10 +94,10 @@ coverage exclude -du fpnew_divsqrt_th_64_multi -code b -linerange 432 -item b 1 
 
 # 3: FPU config: FP8 and FP16ALT formats are disabled
 # 3.1 Format decode in `fpu_wrap`
-coverage exclude -du fpu_wrap -code b -linerange 404 -item b 1 -comment {Supported scalar encodings keep the AH format-select bit low.}
-coverage exclude -du fpu_wrap -code b -linerange 404 -item b 1 -allfalse -clear -comment {The false outcome is exercised; only the enabled arm is unreachable.}
-coverage exclude -du fpu_wrap -code s -linerange 404 -comment {Supported scalar encodings keep the AH format-select bit low.}
-coverage exclude -du fpu_wrap -code b -linerange 269-271 -comment {XF8=XF16ALT=0 disables these format selections.}
+coverage exclude -du fpu_wrap -code b -linerange 410 -item b 2 -comment {Supported scalar encodings keep the AH format-select bit low.}
+coverage exclude -du fpu_wrap -code b -linerange 410 -item b 2 -allfalse -clear -comment {The false outcome is exercised; only the enabled arm is unreachable.}
+coverage exclude -du fpu_wrap -code s -linerange 410 -item s 1 -comment {Supported scalar encodings keep the AH format-select bit low.}
+coverage exclude -du fpu_wrap -code b -linerange 278-280 -comment {XF8=XF16ALT=0 disables these format selections.}
 # 3.2 FP16ALT in the divider format translation
 coverage exclude -du fpnew_divsqrt_th_64_multi -code s -linerange 171 -comment {XF16ALT=0 disables alternate-half divsqrt.}
 coverage exclude -du fpnew_divsqrt_th_64_multi -code b -linerange 171 -comment {XF16ALT=0 disables alternate-half divsqrt.}

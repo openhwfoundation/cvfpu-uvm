@@ -139,7 +139,7 @@ Pipeline,Saturation,Every pipeline register of a datapath instance holds a valid
 stage_occ_addmul_fp32/fp64/fp16, stage_occ_noncomp_fp32/fp64/fp16, stage_occ_conv, stage_occ_divsqrt",All cover properties hit,Assertion Coverage (cover property),Hit by fpu_pipeline_stress_test and the back-to-back tests.
 Pipeline,Flush vs. stage,"flush_i asserted while each individual pipeline register (input, middle, output) holds a valid operation.",cvfpu_stage_occupancy_sva.c_flush_vs_stage (gen_flush_inp/mid/out; 13 covers across the 8 instances),All cover properties hit,Assertion Coverage (cover property),Hit by fpu_pipeline_stress_test.
 Pipeline,Backpressure duration,"fpu_ready_o low while fpu_valid_i is held, for exactly 1, exactly 2 and ≥ 3 cycles, per opgroup of the stalled request.","cvfpu_pipeline_sva.gen_bp_opgroup[0..3] (ADDMUL, DIVSQRT, NONCOMP, CONV):
-c_backpressure_1, c_backpressure_2, c_backpressure_3plus (12 covers)",All cover properties hit,Assertion Coverage (cover property),All 12 hit in the full fpu_reg_list regression. CONV ≥ 3 cycles is the rarest (2 hits): needs other opgroups' results to hold the output arbiter while CONV's pipeline is full.
+c_backpressure_1, c_backpressure_2, c_backpressure_3plus (12 covers)",All cover properties hit,Assertion Coverage (cover property),All 12 hit in the full fpu_reg_list regression.
 Out of scope,FP8 / FP16ALT,"XF8 = 0, XF16ALT = 0 in cv64a60ax_config_pkg: formats not instantiated.",N/A,N/A,N/A,N/A
 Out of scope,Vector / SIMD,"XFVec = 0: scalar-only build, no packed-SIMD operations or fpu_prec_i control.",N/A,N/A,N/A,N/A
 Out of scope,INT8 / INT16 conversions,Masked off by XFVec = 0 (fpu_wrap IntFmtMask).,N/A,N/A,N/A,N/A

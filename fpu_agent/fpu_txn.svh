@@ -134,8 +134,16 @@ class fpu_txn extends uvm_sequence_item;
 
     constraint fp_normal_fp64_exp_c {
         foreach (m_fp_op_type[i]) {
-            (m_fp_op_type[i] == NORMAL) && (m_fmt == 1) -> 
-                m_fp_double_operands[i].exponent dist {1 := 5, [2 : EMIN_FP32-2] := 20, EMIN_FP32 := 5, [EMIN_FP32+2 : EMAX_FP32-2] := 20, EMAX_FP32 := 5, [EMAX_FP32+2 : EMAX_FP64-1] := 45};
+            (m_fp_op_type[i] == NORMAL) && (m_fmt == 1) ->
+                m_fp_double_operands[i].exponent dist {
+                    1                             :/ 5,
+                    [2             : EMIN_FP32-2] :/ 20,
+                    [EMIN_FP32-1   : EMIN_FP32+1] :/ 5,
+                    [EMIN_FP32+2   : EMAX_FP32-2] :/ 20,
+                    [EMAX_FP32-1   : EMAX_FP32+1] :/ 5,
+                    [EMAX_FP32+2   : EMAX_FP64-1] :/ 40,
+                    EMAX_FP64                     :/ 5
+                };
         }
     }
 

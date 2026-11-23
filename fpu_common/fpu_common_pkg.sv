@@ -29,6 +29,7 @@ package fpu_common_pkg;
   
     import uvm_pkg::*;
     import ariane_pkg::*;
+    import fpnew_pkg::*;
 
     localparam config_pkg::cva6_cfg_t CVA6Cfg = build_config_pkg::build_config(cva6_config_pkg::cva6_cfg);
 
@@ -52,6 +53,7 @@ package fpu_common_pkg;
         logic [31:0] tinst;  // transformed instruction information
         logic gva;  // signals when a guest virtual address is written to tval
         logic valid;
+        logic timing;
     } exception_t;
 
     typedef struct packed {
@@ -107,7 +109,14 @@ package fpu_common_pkg;
         SUBNORMAL,
         NORMAL
     } fp_op_type_e;
-    
+
+    typedef enum logic [1:0] {
+        NOT_NAN,
+        CANONICAL_QNAN,
+        NONCANON_QNAN,
+        SNAN_KIND
+    } nan_kind_e;
+
     // print fpu req
     function void print_fpu_req(fpu_req_t R, string S, uvm_verbosity verbosity);
         `uvm_info(S, $sformatf("OP=%0s, OP_A=%0x(x), OP_B=%0x(x), IMM=%0x(x), TID=%0x(x), FMT=%0d(d), RM=%0x(x)", 
@@ -138,9 +147,9 @@ package fpu_common_pkg;
         */
     function logic [10:0] get_exp(logic [CVA6Cfg.FLen-1:0] value, logic [1:0] fmt);
         unique case (fmt)
-            2'h0: return value[fpnew_pkg::man_bits(fpnew_pkg::FP32) +: fpnew_pkg::exp_bits(fpnew_pkg::FP32)]; // Selects 8 bits starting from bit 23 (mantissa bits) for FP32
-            2'h1: return value[fpnew_pkg::man_bits(fpnew_pkg::FP64) +: fpnew_pkg::exp_bits(fpnew_pkg::FP64)]; // Selects 11 bits starting from bit 52 (mantissa bits) for FP64
-            2'h2: return value[fpnew_pkg::man_bits(fpnew_pkg::FP16) +: fpnew_pkg::exp_bits(fpnew_pkg::FP16)]; // Selects 5 bits starting from bit 10 (mantissa bits) for FP16
+            2'h0: return value[FP32_MAN_BITS +: FP32_EXP_BITS];
+            2'h1: return value[FP64_MAN_BITS +: FP64_EXP_BITS];
+            2'h2: return value[FP16_MAN_BITS +: FP16_EXP_BITS];
         endcase
     endfunction
 
@@ -149,9 +158,9 @@ package fpu_common_pkg;
         */
     function logic [51:0] get_mant(logic [CVA6Cfg.FLen-1:0] value, logic [1:0] fmt);
         unique case (fmt) 
-            2'h0: return value[fpnew_pkg::man_bits(fpnew_pkg::FP32)-1:0];
-            2'h1: return value[fpnew_pkg::man_bits(fpnew_pkg::FP64)-1:0];
-            2'h2: return value[fpnew_pkg::man_bits(fpnew_pkg::FP16)-1:0];
+            2'h0: return value[FP32_MAN_BITS-1:0];
+            2'h1: return value[FP64_MAN_BITS-1:0];
+            2'h2: return value[FP16_MAN_BITS-1:0];
         endcase
     endfunction
 
@@ -170,7 +179,10 @@ package fpu_common_pkg;
         /**
         * Classify floating point operand
         */
-    function fpnew_pkg::classmask_e classify_operand(logic [CVA6Cfg.FLen-1:0] value, logic [1:0] fmt);
+    // Every FP-consuming operation reads an invalid NaN box as the canonical
+    // qNaN; only FMV.X.* moves the raw bits and must pass check_box = 0.
+    function fpnew_pkg::classmask_e classify_operand(logic [CVA6Cfg.FLen-1:0] value, logic [1:0] fmt,
+                                                     bit check_box = 1'b1);
         logic        sign;
         logic [10:0] exponent;
         logic [51:0] mantissa;
@@ -184,15 +196,15 @@ package fpu_common_pkg;
     
         mantissa = get_mant(value, fmt);
         exponent = get_exp(value, fmt);
-        mantissa_msb = (fmt == 2'h0) ? mantissa[fpnew_pkg::man_bits(fpnew_pkg::FP32)-1] : 
-                       (fmt == 2'h1) ? mantissa[fpnew_pkg::man_bits(fpnew_pkg::FP64)-1] : 
-                                       mantissa[fpnew_pkg::man_bits(fpnew_pkg::FP16)-1];
-        exp_all_ones = (fmt == 2'h0) ? (exponent == {fpnew_pkg::exp_bits(fpnew_pkg::FP32){1'b1}}) : 
-                       (fmt == 2'h1) ? (exponent == {fpnew_pkg::exp_bits(fpnew_pkg::FP64){1'b1}}) : 
-                                       (exponent == {fpnew_pkg::exp_bits(fpnew_pkg::FP16){1'b1}});
+        mantissa_msb = (fmt == 2'h0) ? mantissa[FP32_MAN_BITS-1] :
+                       (fmt == 2'h1) ? mantissa[FP64_MAN_BITS-1] :
+                                       mantissa[FP16_MAN_BITS-1];
+        exp_all_ones = (fmt == 2'h0) ? (exponent == {FP32_EXP_BITS{1'b1}}) :
+                       (fmt == 2'h1) ? (exponent == {FP64_EXP_BITS{1'b1}}) :
+                                       (exponent == {FP16_EXP_BITS{1'b1}});
 
         sign       = get_operand_sign(value, fmt);
-        is_zero    = is_boxed && (exponent == '0 && mantissa == '0);
+        is_zero    = (exponent == '0 && mantissa == '0);
         is_subnorm = (exponent == '0 && mantissa != '0);
         is_normal  = (exponent != '0 && !exp_all_ones);
         is_inf     = (exp_all_ones && mantissa == '0);
@@ -202,6 +214,7 @@ package fpu_common_pkg;
         `uvm_info("CLASSIFICATION", $sformatf("sign=%b, exp=%0h, mant=%0h, zero=%b, subnorm=%b, normal=%b, inf=%b, snan=%b, qnan=%b", 
                 sign, exponent, mantissa, is_zero, is_subnorm, is_normal, is_inf, is_snan, is_qnan), UVM_MEDIUM);
 
+        if (check_box && !is_boxed) return fpnew_pkg::QNAN;
         if (is_qnan) return fpnew_pkg::QNAN;
         if (is_snan) return fpnew_pkg::SNAN;
         if (!sign && is_inf) return fpnew_pkg::POSINF;
@@ -219,17 +232,32 @@ package fpu_common_pkg;
         */
     function bit get_operand_sign(logic [CVA6Cfg.FLen-1:0] value, logic [1:0] fmt);
         case (fmt)
-            2'h0: return value[fpnew_pkg::fp_width(fpnew_pkg::FP32)-1];
-            2'h1: return value[fpnew_pkg::fp_width(fpnew_pkg::FP64)-1];
-            2'h2: return value[fpnew_pkg::fp_width(fpnew_pkg::FP16)-1];
+            2'h0: return value[FP32_MAN_BITS + FP32_EXP_BITS];
+            2'h1: return value[FP64_MAN_BITS + FP64_EXP_BITS];
+            2'h2: return value[FP16_MAN_BITS + FP16_EXP_BITS];
         endcase
     endfunction: get_operand_sign
 
+    // Canonical means positive with only the mantissa MSB set; any other quiet
+    // NaN carries a payload that transfer ops must preserve bit-exactly.
+    function nan_kind_e nan_kind(logic [CVA6Cfg.FLen-1:0] value, logic [1:0] fmt,
+                                 bit check_box = 1'b1);
+        logic [51:0] canon_mant;
+        fpnew_pkg::classmask_e cls;
 
-    // Coverage enablement flag
-    typedef struct {
-        bit coverage_enable = 1;  // Control coverage collection
-    } fpu_cov_cfg_t;
+        if (check_box && !operand_is_boxed(value, fmt)) return CANONICAL_QNAN;
+
+        cls = classify_operand(value, fmt, 1'b0);
+        if (cls == fpnew_pkg::SNAN) return SNAN_KIND;
+        if (cls != fpnew_pkg::QNAN) return NOT_NAN;
+
+        canon_mant = (fmt == 2'h0) ? 52'(1) << (FP32_MAN_BITS-1) :
+                     (fmt == 2'h1) ? 52'(1) << (FP64_MAN_BITS-1) :
+                                     52'(1) << (FP16_MAN_BITS-1);
+        if (!get_operand_sign(value, fmt) && get_mant(value, fmt) == canon_mant) return CANONICAL_QNAN;
+        return NONCANON_QNAN;
+    endfunction: nan_kind
+
 
     // Macro for per-instance coverage tracking
     `define per_instance_fcov option.per_instance = 1; option.name = name;

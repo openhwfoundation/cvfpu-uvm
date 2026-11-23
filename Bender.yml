@@ -19,6 +19,7 @@ sources:
       - tests
       - modules/cva6-cvfpu
     files:
+      - modules/cva6-cvfpu/obi_pkg.sv
       - modules/cva6-cvfpu/config_pkg.sv
       - modules/cva6-cvfpu/build_config_pkg.sv
       - modules/cva6-cvfpu/cv64a60ax_config_pkg_cvfpu-uvm.sv
@@ -31,7 +32,11 @@ sources:
       - ref_model_csim/rtl/fpu_refmodel_pkg.sv
       - env/fpu_env_pkg.sv
       - tests/fpu_test_pkg.sv
-      - top/rtl/tb_top.sv
+      - top/tb/cvfpu_rsp_arb_sva.sv
+      - top/tb/cvfpu_sva.sv
+      - top/tb/cvfpu_pipeline_sva.sv
+      - top/tb/cvfpu_stage_occupancy_sva.sv
+      - top/tb/tb_top.sv
       
 
   

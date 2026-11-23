@@ -40,10 +40,14 @@ package fpu_test_pkg;
   `include "fpu_unit_test.svh"
   `include "fpu_op_group_test.svh"
   `include "fpu_random_test.svh"
-  `include "bug_f2i_test.svh"
   `include "fpu_fmt_single_op_test.svh"
   `include "fpu_fmt_op_group_test.svh"
   `include "fpu_fmt_random_test.svh"
+  `include "fpu_conv_test.svh"
+  `include "fpu_special_val_test.svh"
+  `include "fpu_random_op_bp_test.svh"
+  `include "fpu_op_group_bp_test.svh"
+  `include "fpu_pipeline_stress_test.svh"
 
 endpackage: fpu_test_pkg
 

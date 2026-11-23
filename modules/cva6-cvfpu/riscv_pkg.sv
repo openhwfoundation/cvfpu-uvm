@@ -37,6 +37,7 @@ package riscv;
 
   // type which holds xlen
   typedef enum logic [1:0] {
+    XLEN_NA  = 2'b00,  // Used for mstatus.{S/U}XL when {S/U} not implemented
     XLEN_32  = 2'b01,
     XLEN_64  = 2'b10,
     XLEN_128 = 2'b11
@@ -348,6 +349,8 @@ package riscv;
   localparam logic [XLEN-1:0] INSTR_PAGE_FAULT = 12;  // Instruction page fault
   localparam logic [XLEN-1:0] LOAD_PAGE_FAULT = 13;  // Load page fault
   localparam logic [XLEN-1:0] STORE_PAGE_FAULT = 15;  // Store page fault
+  localparam logic [XLEN-1:0] SOFTWARE_CHECK = 18;  // Software check
+  localparam logic [XLEN-1:0] HARDWARE_ERROR = 19;  // Transient error (e.g., bit-flip error in caches' SRAMs)
   localparam logic [XLEN-1:0] INSTR_GUEST_PAGE_FAULT = 20;  // Instruction guest-page fault
   localparam logic [XLEN-1:0] LOAD_GUEST_PAGE_FAULT = 21;  // Load guest-page fault
   localparam logic [XLEN-1:0] VIRTUAL_INSTRUCTION = 22;  // virtual instruction
@@ -642,8 +645,6 @@ package riscv;
     // Cache Control (platform specifc)
     CSR_DCACHE           = 12'h7C1,
     CSR_ICACHE           = 12'h7C0,
-    // Accelerator memory consistency (platform specific)
-    CSR_ACC_CONS         = 12'h7C2,
     // Triggers
     CSR_TSELECT          = 12'h7A0,
     CSR_TDATA1           = 12'h7A1,

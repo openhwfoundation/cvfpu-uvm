@@ -61,7 +61,9 @@ class fpu_refmodel extends uvm_object;
     op1           = txn.data.operand_a;
     op2           = txn.data.operand_b;
     op3           = txn.data.imm;
-    rounding_mode = mpfr_rnd_e'(txn.rm);
+    // DYN defers to the dynamic rounding mode (fcsr.frm), mirroring fpu_wrap.sv:151's
+    // fpu_rm_i->fpu_frm_i substitution.
+    rounding_mode = mpfr_rnd_e'((txn.rm == fpnew_pkg::DYN) ? txn.frm : txn.rm);
     is_signed     = ~txn.data.imm[0];
     int_format    = txn.data.imm[1];
     dst_env       = get_dest_env(fpnew_pkg::fp_format_e'(txn.fmt));

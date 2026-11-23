@@ -42,6 +42,13 @@ class fpu_agent extends uvm_agent;
     fpu_driver    m_driver;
     fpu_monitor   m_monitor;
 
+    // Coverage models
+    fpu_agent_cov_model m_cov_model;
+    fpu_conv_cov        m_conv_cov;
+    fpu_comput_cov      m_comput_cov;
+    fpu_noncomput_cov   m_noncomput_cov;
+    protected bit       m_func_cov_en = 1'b1;
+
     virtual fpu_if fpu_vif;
     virtual pulse_if flush_vif;
     
@@ -63,6 +70,15 @@ class fpu_agent extends uvm_agent;
             m_sequencer = fpu_sequencer::type_id::create("sequencer", this);
             m_driver    = fpu_driver::type_id::create("driver", this);
             m_monitor.set_is_active();
+        end
+
+        if (m_func_cov_en) begin
+            m_cov_model     = fpu_agent_cov_model::type_id::create("cov_model", this);
+            m_conv_cov      = fpu_conv_cov::type_id::create("conv_cov", this);
+            m_comput_cov    = fpu_comput_cov::type_id::create("comput_cov", this);
+            m_noncomput_cov = fpu_noncomput_cov::type_id::create("noncomput_cov", this);
+        end else begin
+            `uvm_info(get_full_name(), "Functional coverage disabled (+FPU_FUNC_COV_DIS)", UVM_LOW)
         end
 
         if (!uvm_config_db #( virtual fpu_if)::get(this, "", "fpu_vif", fpu_vif )) begin
@@ -87,6 +103,14 @@ class fpu_agent extends uvm_agent;
             m_driver.set_flush_vif(flush_vif);
             m_monitor.m_sequencer = m_sequencer; 
         end
+        if (m_func_cov_en) begin
+            m_monitor.ap_fpu_req.connect(m_cov_model.ap_cov_req);
+            m_monitor.ap_fpu_rsp.connect(m_cov_model.ap_cov_rsp);
+            m_monitor.ap_flush.connect(m_cov_model.ap_cov_flush);
+            m_monitor.ap_conv_obs.connect(m_conv_cov.analysis_export);
+            m_monitor.ap_conv_obs.connect(m_comput_cov.analysis_export);
+            m_monitor.ap_conv_obs.connect(m_noncomput_cov.analysis_export);
+        end
         m_monitor.set_fpu_vif(fpu_vif);
         m_monitor.set_flush_vif(flush_vif);
         `uvm_info(get_full_name( ), "Connect stage complete.", UVM_LOW)
@@ -108,5 +132,9 @@ class fpu_agent extends uvm_agent;
     function void set_is_active();
         is_active = UVM_ACTIVE;
     endfunction: set_is_active
+
+    function void set_func_cov_en(bit en);
+        m_func_cov_en = en;
+    endfunction: set_func_cov_en
   
 endclass: fpu_agent
